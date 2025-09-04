@@ -1,4 +1,5 @@
 import numpy as np 
+SOC_BOUNDS = (0.2, 0.8)  # SOC工作边界 (low, high)
 
 # KT系数矩阵 [系数值, i, j, k, l]
 KT_COEFFS = np.array([

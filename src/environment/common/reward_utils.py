@@ -67,3 +67,14 @@ def Nrpm_bound_reward(N_rpm, beta=1e-2, thresh_ratio=0.05, barrier_type='barrier
         return make_bound_reward(N_rpm, v_min, v_max, beta, thresh_ratio)
     else:
         return make_bound_reward_type2(N_rpm, v_min, v_max, beta)
+
+
+def SOC_bound_reward(SOC, SOC_min, SOC_max, beta3=1e-2, thresh_ratio=0.05, barrier_type='barrier'):
+    # v_max = Q_emax + Q_mmax 
+    # 快越界时惩罚 
+    v_min = SOC_min 
+    v_max = SOC_max
+    if barrier_type == 'barrier':
+        return make_bound_reward(SOC, v_min, v_max, beta3, thresh_ratio)
+    else:
+        return make_bound_reward_type2(SOC, v_min, v_max, beta3)

@@ -1,5 +1,6 @@
 from .engine import Engine
 from .motor import Motor
+from .const import SOC_BOUNDS
 
 def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, float, float, float, int]:
     """
@@ -42,7 +43,6 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     8: 低SOC时强制发动机工作
     """
     # 系统参数配置
-    SOC_BOUNDS = (0.2, 0.8)  # SOC工作边界 (low, high)
     Q_emin, Q_emax = Engine(N)
     Q_mmax = Motor(N)
     
@@ -59,22 +59,22 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     # 扭矩分配逻辑 
     Esignal2 = 0 
     N_e, Q_e, N_m, Q_m = 0.0, 0.0, 0.0, 0.0
+    # print(f'{SOC=}, {model=}, {Q_emin=}, {Q_emax=}, {Q_mmax=}, {Q_req=}, {SOC=}')
     
-    match model: 
-        case 1 | 3:  # 发动机最大+电机补充 
-            Q_e, N_e = Q_emax, N
-            Q_m, N_m = Q_req - Q_e, N
-        case 2 | 8:  # 纯发动机工作
-            Q_e, N_e = (Q_req, N) if model == 8 else (Q_req, N)
-            N_m, Q_m = 0.0, 0.0
-        case 4:  # 纯电机工作
-            Q_m, N_m = Q_req, N
-        case 5 | 6:  # 发动机最大+异常标志
-            Q_e, N_e = Q_emax, N
-            Esignal2 = 1
-        case 7:  # 超扭矩复合模式
-            Q_e, N_e = Q_emax, N
-            Q_m, N_m = Q_mmax, N
-            Esignal2 = 1
+    if model == 1 | 3:  # 发动机最大+电机补充 
+        Q_e, N_e = Q_emax, N 
+        Q_m, N_m = Q_req - Q_e, N 
+    elif model == 2 | 8:  # 纯发动机工作 
+        Q_e, N_e = (Q_req, N) if model == 8 else (Q_req, N)
+        N_m, Q_m = 0.0, 0.0
+    elif model == 4:  # 纯电机工作
+        Q_m, N_m = Q_req, N
+    elif model == 5 | 6:  # 发动机最大+异常标志
+        Q_e, N_e = Q_emax, N
+        Esignal2 = 1
+    elif model == 7:  # 超扭矩复合模式
+        Q_e, N_e = Q_emax, N
+        Q_m, N_m = Q_mmax, N
+        Esignal2 = 1
 
     return (model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2)
