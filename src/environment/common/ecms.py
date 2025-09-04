@@ -1,7 +1,7 @@
 import numpy as np
 from .engine import Engine
 from .motor import Motor
-from .battery_power import Battery_power
+from .battery_power import battery_power
 from .gas_consumption import Gas_consumption
 
 def ECMS(N, Q_req, SOC):
@@ -55,7 +55,7 @@ def ECMS(N, Q_req, SOC):
             Q_m_temp = Q_req - Q_e_temp
             
             # 电池功率计算
-            P_b = Battery_power(N, Q_m_temp)
+            P_b = battery_power(N, Q_m_temp)
             
             # 发动机功率和油耗计算
             W_fuel = Gas_consumption(N, Q_e_temp)
@@ -85,7 +85,7 @@ def ECMS(N, Q_req, SOC):
         N_m = N
         
         # 二次SOC检查
-        P_b_1 = Battery_power(N_m, Q_m)
+        P_b_1 = battery_power(N_m, Q_m)
         SOC_pred = (E_batt * SOC - P_b_1 * time_interval) / E_batt
         if SOC_pred < 0.2:
             Esignal2 = 1
@@ -104,4 +104,7 @@ def ECMS(N, Q_req, SOC):
         else:
             model = 8
         
-        return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Esignal2
+        # ecms return (model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2)
+        # return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Esignal2
+        # fixed: 添加遗漏的Q_mmax参数 
+        return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2

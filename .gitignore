@@ -3,6 +3,7 @@ __pycache__/
 *.py[codz]
 *$py.class
 *_log_*
+models/
 
 # C extensions
 *.so

@@ -47,8 +47,8 @@ for seed in seeds:
     print(seed, '-'*30)
     # reward_type = 'per_nm' 
     reward_type = 'raw' 
+    # engine_version = 'v2' 
     engine_version = 'v2' 
-    engine_version = 'v1' 
     regularization_type = 'Np' 
     regularization_type = 'Np_SOC' 
     dt = 0.1  

@@ -9,6 +9,7 @@ from ..common.gear_box import GearBox
 from ..common.propeller import propeller
 from ..common.pms import PMS
 from ..common.ecms import ECMS
+from ..common.ecms_qm import ECMS_Qm
 from ..common.battery_power import battery_power
 from ..common.battery_soc import Battery_SOC
 from ..common.gas_consumption import Gas_consumption
@@ -83,8 +84,11 @@ class ShipEnv(gym.Env):
         # self.avg_window_sizes = avg_window_sizes
         
         # 定义动作空间（连续速度值）
+        Q_m_min = 0
+        Q_m_max = 1000 
         self.action_space = gym.spaces.Box(
-            low=v_min, high=v_max, shape=(), dtype=np.float64
+            low=np.array([v_min, Q_m_min]), 
+            high=np.array([v_max, Q_m_max]), shape=(2,), dtype=np.float64
         )
 
         # 定义观察空间（字典形式）
@@ -271,8 +275,9 @@ class ShipEnv(gym.Env):
             future_alpha_avgs[ws] = avg_alpha
         return future_v_avgs, future_alpha_avgs
 
-    def step(self, action: float) -> Tuple[Dict, float, bool, bool, Dict]:
+    def step(self, action: float, Q_m: float) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
+        assert self.engine_version == 'v3', 'Engine must be v3'
         time = self.state['time'][0]
         SOC = self.state['soc'][0]
         position = self.state['position'][0]
@@ -365,10 +370,15 @@ class ShipEnv(gym.Env):
         # 计算PMS参数 
         if self.engine_version == 'v1':
             _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = PMS(N_rpm, Q_req, SOC)
+        elif self.engine_version == 'v2':
+            _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS(N_rpm, Q_req, SOC)            
+        elif self.engine_version == 'v3': 
+            _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS_Qm(
+                N_rpm, Q_req, SOC, Q_m)
+            # Q_m = Q_m
         else:
-            # v2
-            _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS(N_rpm, Q_req, SOC)
-            
+            raise ValueError(f'无效引擎版本: {self.engine_version}')
+
         # 计算电池功率和SOC
         P_b = battery_power(N_m, Q_m)
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)

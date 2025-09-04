@@ -8,8 +8,8 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     
     根据动力系统状态和需求扭矩，选择最优工作模式并分配发动机/电机扭矩。
 
-    Parameters
-    ----------
+    Parameters 
+    ---------- 
     N : float 
         系统转速，单位：转/分钟 (rpm) 
     Q_req : float 
@@ -58,9 +58,9 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
 
     # 扭矩分配逻辑 
     Esignal2 = 0 
-    N_e, Q_e, N_m, Q_m = 0.0, 0.0, 0.0, 0.0
+    N_e, Q_e, N_m, Q_m = 0.0, 0.0, 0.0, 0.0 
     # print(f'{SOC=}, {model=}, {Q_emin=}, {Q_emax=}, {Q_mmax=}, {Q_req=}, {SOC=}')
-    
+    print(f'{SOC=}, {model=}') 
     if model == 1 | 3:  # 发动机最大+电机补充 
         Q_e, N_e = Q_emax, N 
         Q_m, N_m = Q_req - Q_e, N 
@@ -77,4 +77,5 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
         Q_m, N_m = Q_mmax, N
         Esignal2 = 1
 
+    print(f'{Q_m=}, {Q_req=}')
     return (model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2)
