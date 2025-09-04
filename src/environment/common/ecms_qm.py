@@ -21,7 +21,7 @@ def ECMS_Qm(N, Q_req, SOC, Q_m):
     if Q_req > Q_emax + Q_mmax: 
         Esignal2 = 1 
         print('需求扭矩超限：Esignal2 = 1') 
-        return model, N, 0, N, 0, Q_emin, Q_emax, Esignal2 
+        return model, N, 0, N, 0, Q_emin, Q_emax, Q_mmax, Esignal2 
     else: 
         # 惩罚函数参数 
         SOC_min = 0.2 
@@ -66,4 +66,4 @@ def ECMS_Qm(N, Q_req, SOC, Q_m):
         else:
             model = 8
         
-        return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Esignal2
+        return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2
