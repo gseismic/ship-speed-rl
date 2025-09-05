@@ -275,9 +275,11 @@ class ShipEnv(gym.Env):
             future_alpha_avgs[ws] = avg_alpha
         return future_v_avgs, future_alpha_avgs
 
-    def step(self, action: float, Q_m: float) -> Tuple[Dict, float, bool, bool, Dict]:
+    def step(self, actions) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
         assert self.engine_version == 'v3', 'Engine must be v3'
+        action = actions[0]
+        Q_m = actions[1]
         time = self.state['time'][0]
         SOC = self.state['soc'][0]
         position = self.state['position'][0]
@@ -346,7 +348,7 @@ class ShipEnv(gym.Env):
         # 计算船舶阻力
         if self.engine_version == 'v1':
             RN = ship_resistance3(V_ship, alpha_S, V_wind, alpha_wind)
-        elif self.engine_version == 'v2':
+        elif self.engine_version in ['v2', 'v3']:
             RN = ship_resistance3_v2(V_ship, alpha_S, V_wind, alpha_wind)
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -354,7 +356,7 @@ class ShipEnv(gym.Env):
         # 计算螺旋桨参数
         if self.engine_version == 'v1':
             N_p, Q_p, Esignal1 = propeller(V_ship, RN)
-        elif self.engine_version == 'v2':
+        elif self.engine_version in ['v2', 'v3']:
             N_p, Q_p, Esignal1 = propeller_v2(V_ship, RN)
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -362,7 +364,7 @@ class ShipEnv(gym.Env):
         # 计算齿轮箱参数
         if self.engine_version == 'v1':
             N_rpm, Q_req = GearBox(N_p, Q_p)
-        elif self.engine_version == 'v2':
+        elif self.engine_version in ['v2', 'v3']:
             N_rpm, Q_req = GearBox_v2(N_p, Q_p)
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -392,6 +394,18 @@ class ShipEnv(gym.Env):
 
         # 初始化奖励
         reward = 0
+        
+        # 检查Q_e是否合理
+        Q_e__check = Q_req - Q_m 
+        # if Q_e__check < 0:
+        #     reward += -5000
+        #     terminated = True
+        # elif Q_e__check > Q_emax:
+        #     reward += -5000
+        #     terminated = True
+        # else:
+        #     reward += -del_fuel_consumption
+        
 
         # 添加正则化奖励（如果启用）
         if self.regularization_type is not None and self.regularization_type.lower() != 'none':
@@ -412,7 +426,7 @@ class ShipEnv(gym.Env):
 
         # 处理信号错误
         BIG_PENALTY = -5000
-        if Esignal1 == -1 or Esignal1 == 1:
+        if Esignal1 == -1 or Esignal1 == 1 or Q_e__check < 0 or Q_e__check > Q_emax:
             reward += BIG_PENALTY
             terminated = True
         elif Esignal2 == 1:

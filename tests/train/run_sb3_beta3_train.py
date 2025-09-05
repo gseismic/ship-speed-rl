@@ -116,14 +116,14 @@ if __name__ == "__main__":
     # 创建任务列表 
     seeds = range(10) 
     # reward_types = ['per_nm', 'scaled', 'raw', 'distance_raw'] 
-    reward_type = 'raw'
+    reward_type = 'raw' 
     # engine_version = ['v1', 'v2'] 
     regularization_type = 'Np' 
     regularization_type = 'Np_Q_Nrpm' 
     regularization_type = 'Np_Nrpm' 
     regularization_type = 'Np' 
     regularization_type = 'Np_SOC' 
-    engine_version = 'v1' 
+    engine_version = 'v3' 
     # engine_version = 'v2' 
     # all_config = list(product(seeds, reward_type, engine_version))
     # task_func = partial(train_and_test, lr=1e-4, gamma=0.1, reward_type='per_nm', engine_version='v1') 

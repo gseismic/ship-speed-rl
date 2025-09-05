@@ -55,15 +55,15 @@ def ECMS_Qm(N, Q_req, SOC, Q_m):
             Esignal2 = -1
         
         # 判断运行模式
-        if Q_e > 0 and Q_m > 0:
-            model = 1
-        elif Q_e > 0 and Q_m == 0:
-            model = 2
-        elif Q_e == 0 and Q_m > 0:
-            model = 4
-        elif Q_e > 0 and Q_m < 0:
-            model = 3
-        else:
-            model = 8
+        if Q_e > 0 and Q_m > 0: 
+            model = 1 
+        elif Q_e > 0 and Q_m == 0: 
+            model = 2 
+        elif Q_e == 0 and Q_m > 0: 
+            model = 4 
+        elif Q_e > 0 and Q_m < 0: 
+            model = 3 
+        else: 
+            model = 8 
         
         return model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2
