@@ -96,7 +96,7 @@ def train_and_test(seed, lr=1e-4, gamma=1.0, reward_type='raw', engine_version='
             regularization_type=regularization_type,
         )
         
-        test_env = ShipEnv(eval=True, reward_type=reward_type, engine_version=engine_version, regularization_type=regularization_type, data_file='../../../data/Data_Input.xlsx')
+        test_env = ShipEnv(eval=True, reward_type=reward_type, engine_version=engine_version, regularization_type=regularization_type, data_file='data/Data_Input.xlsx')
         print(f'Seed {seed} final-model:')
         test_model(test_env, final_model_path, seed, verbose=1)
         print(f'Seed {seed} best-model:')
