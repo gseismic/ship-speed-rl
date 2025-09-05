@@ -15,7 +15,7 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     Q_req : float 
         总需求扭矩，单位：牛·米 (N·m) 
     SOC : float 
-        电池荷电状态，范围：0.0~1.0
+        电池荷电状态，范围：0.0~1.0 
 
     Returns
     -------

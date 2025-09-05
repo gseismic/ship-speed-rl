@@ -10,7 +10,7 @@ import torch.nn as nn
 import sys
 import os 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.environment.beta3.ship_env import ShipEnv
+from src.environment.gamma.ship_env import ShipEnv
 from src.algorithm.utils.sb3 import EpisodeRewardCallback, SaveBestModelCallback 
 from src.algorithm.utils.seed import seed_all 
 from test_utils import test_model, plot_learning_curves 
@@ -27,7 +27,7 @@ def train_model(seed,
     os.makedirs('models', exist_ok=True) 
 
     param_tag = f'{lr}_{gamma}_{reward_type}_{engine_version}_{regularization_type}'
-    tag = f'beta3_{seed}_{param_tag}' 
+    tag = f'gamma_{seed}_{param_tag}' 
     # tag = f'mp_env1_r_pos_time_soc_nm_t2_largenn_vsmall_{seed}_{param_tag}' 
 
     # 创建并行环境 
@@ -59,7 +59,7 @@ def train_model(seed,
             "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
             # "activation_fn": nn.ReLU, 
         },
-        tensorboard_log="./ppo_ship_log_large_m2/"
+        tensorboard_log="./ppo_ship_log_gamma/"
     )
 
     # 创建奖励回调 

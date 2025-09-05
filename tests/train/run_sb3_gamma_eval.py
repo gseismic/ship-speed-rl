@@ -5,7 +5,7 @@ from stable_baselines3 import PPO
 import sys
 import os 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.environment.beta3.ship_env import ShipEnv
+from src.environment.gamma.ship_env import ShipEnv
 from test_utils import test_model
 # 加载训练好的模型
 # model = PPO.load("ppo_ship") 
@@ -67,7 +67,8 @@ for seed in seeds:
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_Q_Nrpm_best' 
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_Nrpm_best' 
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_dt{dt}_best' 
-    model_path = f'models/beta3_{seed}_0.0003_1.0_{reward_type}_{engine_version}_Np_SOC_best' 
+    model_path = f'models/gamma_{seed}_0.0003_1.0_{reward_type}_{engine_version}_Np_SOC_best' 
     # model_path = f'models/mp_env1_r_pos_time_soc_nm_t_{seed}_0.0003_1.0_per_nm_{engine_version}_Np' 
+
 
     eval(test_env, model_path, seed, verbose=1) 

@@ -11,13 +11,14 @@ def ECMS(N, Q_req, SOC):
     E_batt = 205.6
     
     # 发动机和电机约束
-    Q_emin, Q_emax = Engine(N) 
-    Q_mmax = Motor(N) 
-    time_interval = 2  # 环境数据变化的时间间隔 
+    Q_emin, Q_emax = Engine(N) # 发动机最小，最大 e: engine
+    Q_mmax = Motor(N) # 输出电机最大扭矩 Q_mmax (N·m) m: motor 
+    time_interval = 2  # 环境数据变化的时间间隔 XXX 这里应该改成del_t 
     
     # 边界超限报警
     if Q_req > Q_emax + Q_mmax: 
         Esignal2 = 1 
+        # 超出发动机和电机总和 
         print('需求扭矩超限：Esignal2 = 1') 
         return model, N, 0, N, 0, Q_emin, Q_emax, Q_mmax, Esignal2 
     else: 
@@ -35,14 +36,14 @@ def ECMS(N, Q_req, SOC):
         s_charge = 2.14 * p_soc * 3.6 / LHV * 1000 
         s_discharge = 3.21 * p_soc * 3.6 / LHV * 1000 
         
-        # 发动机搜索范围
+        # 发动机搜索范围 
         start = max(0, Q_req - Q_mmax)
         stop = min(Q_emax, Q_req + Q_mmax)
         Q_e_list = np.linspace(start, stop, 100).tolist()
         
-        # 添加边界值
-        if Q_req >= Q_emax:
-            Q_e_list.append(Q_emax)
+        # 添加边界值 
+        if Q_req >= Q_emax: 
+            Q_e_list.append(Q_emax) 
         else:
             Q_e_list.append(Q_req)
         
@@ -57,12 +58,12 @@ def ECMS(N, Q_req, SOC):
             # 电池功率计算
             P_b = battery_power(N, Q_m_temp)
             
-            # 发动机功率和油耗计算
+            # 发动机功率和油耗计算 
             W_fuel = Gas_consumption(N, Q_e_temp)
             P_eng = 2 * np.pi * N * Q_e_temp / 60 / 1000  # 转换为kW
             
-            # 计算等效消耗
-            if P_b >= 0:
+            # 计算等效消耗 
+            if P_b >= 0: 
                 cost = W_fuel * P_eng + s_discharge * P_b
             else:
                 cost = W_fuel * P_eng + s_charge * P_b

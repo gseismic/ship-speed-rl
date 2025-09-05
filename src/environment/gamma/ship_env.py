@@ -9,14 +9,14 @@ from ..common.gear_box import GearBox
 from ..common.propeller import propeller
 from ..common.pms import PMS
 from ..common.ecms import ECMS
-from ..common.ecms_qm import ECMS_Qm
+from ..common.ecms_qm2 import ECMS_Qm2
 from ..common.battery_power import battery_power
 from ..common.battery_soc import Battery_SOC
 from ..common.gas_consumption import Gas_consumption
 from ..common.propeller_v2 import propeller as propeller_v2
 from ..common.ship_resistance3_v2 import ship_resistance3 as ship_resistance3_v2
 from ..common.gear_box_v2 import GearBox as GearBox_v2 
-from ..common.reward_utils import Np_bound_reward, Q_bound_reward, Nrpm_bound_reward, SOC_bound_reward 
+from ..common.reward_utils import Np_bound_reward, Q_bound_reward, Nrpm_bound_reward, SOC_bound_reward, make_bound_reward
 
 # from beta/..t2m.py
 class ShipEnv(gym.Env):
@@ -84,11 +84,11 @@ class ShipEnv(gym.Env):
         # self.avg_window_sizes = avg_window_sizes
         
         # 定义动作空间（连续速度值）
-        Q_m_min = 0
-        Q_m_max = 1000 
+        Q_m_ratio_min = 0
+        Q_m_ratio_max = 1.0 
         self.action_space = gym.spaces.Box(
-            low=np.array([v_min, Q_m_min]), 
-            high=np.array([v_max, Q_m_max]), shape=(2,), dtype=np.float64
+            low=np.array([v_min, Q_m_ratio_min]), 
+            high=np.array([v_max, Q_m_ratio_max]), shape=(2,), dtype=np.float64
         )
 
         # 定义观察空间（字典形式）
@@ -279,13 +279,15 @@ class ShipEnv(gym.Env):
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
         assert self.engine_version == 'v3', 'Engine must be v3'
         action = actions[0] 
-        Q_m = actions[1] 
+        Q_m_ratio = actions[1] 
         time = self.state['time'][0] 
         SOC = self.state['soc'][0] 
         position = self.state['position'][0] 
         time_index = int(time / 2) # FIXED 2 -> dt 
         V_ship = action  # 船舶速度（m/s）
         index = np.searchsorted(self.S_nm, position) 
+        
+        # print(f'{Q_m_ratio=}, {V_ship=}') 
 
         # 计算新位置和时间 
         del_S_nm = V_ship * self.dt * 3600 / 1852  # 转换为海里
@@ -375,15 +377,16 @@ class ShipEnv(gym.Env):
         elif self.engine_version == 'v2': 
             _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS(N_rpm, Q_req, SOC)            
         elif self.engine_version == 'v3': 
-            _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS_Qm(
-                N_rpm, Q_req, SOC, Q_m) 
-            # Q_m = Q_m
+            # Esignal2 = 0 # ratio下 始终合法
+            N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS_Qm2(
+                N_rpm, Q_req, SOC, Q_m_ratio) 
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
 
         # 计算电池功率和SOC 
         P_b = battery_power(N_m, Q_m) 
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)
+        print(f'{Q_req=}, {Q_m_ratio=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
 
         # 计算燃料消耗 
         W_fuel = Gas_consumption(N_e, Q_e) 
@@ -396,7 +399,9 @@ class ShipEnv(gym.Env):
         reward = 0
         
         # 检查Q_e是否合理
-        Q_e__check = Q_req - Q_m 
+        # Q_e__check = Q_req - Q_m
+        # if Q_e__check < 0:
+        #     print(f'Q_e__check < 0: {Q_e__check=}')
         # if Q_e__check < 0:
         #     reward += -5000
         #     terminated = True
@@ -406,11 +411,15 @@ class ShipEnv(gym.Env):
         # else:
         #     reward += -del_fuel_consumption
         
+        
+        Q_req_reward = make_bound_reward(Q_req, Q_emin, Q_emax + Q_mmax, 1e-2, thresh_ratio=0.05)
+        print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
+        reward += Q_req_reward 
 
         # 添加正则化奖励（如果启用）
         if self.regularization_type is not None and self.regularization_type.lower() != 'none':
-            term = 0
-            types_ = self.regularization_type.split('_')
+            term = 0 
+            types_ = self.regularization_type.split('_') 
             # print(types_) 
             # raise 
             soc_regl = 0
@@ -431,7 +440,8 @@ class ShipEnv(gym.Env):
 
         # 处理信号错误
         BIG_PENALTY = -5000
-        if Esignal1 == -1 or Esignal1 == 1 or Q_e__check < 0 or Q_e__check > Q_emax:
+        if Esignal1 == -1 or Esignal1 == 1 or Battery_state != 0:
+            # NEW: Battery_state 大惩罚
             reward += BIG_PENALTY
             terminated = True
         elif Esignal2 == 1:
