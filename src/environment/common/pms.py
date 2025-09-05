@@ -60,16 +60,16 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     Esignal2 = 0 
     N_e, Q_e, N_m, Q_m = 0.0, 0.0, 0.0, 0.0 
     # print(f'{SOC=}, {model=}, {Q_emin=}, {Q_emax=}, {Q_mmax=}, {Q_req=}, {SOC=}')
-    print(f'{SOC=}, {model=}') 
-    if model == 1 | 3:  # 发动机最大+电机补充 
+    # print(f'{SOC=}, {model=}') 
+    if model == 1 or model == 3:  # 发动机最大+电机补充 
         Q_e, N_e = Q_emax, N 
         Q_m, N_m = Q_req - Q_e, N 
-    elif model == 2 | 8:  # 纯发动机工作 
+    elif model == 2 or model == 8:  # 纯发动机工作 
         Q_e, N_e = (Q_req, N) if model == 8 else (Q_req, N)
         N_m, Q_m = 0.0, 0.0
     elif model == 4:  # 纯电机工作
         Q_m, N_m = Q_req, N
-    elif model == 5 | 6:  # 发动机最大+异常标志
+    elif model == 5 or model == 6:  # 发动机最大+异常标志
         Q_e, N_e = Q_emax, N
         Esignal2 = 1
     elif model == 7:  # 超扭矩复合模式
@@ -77,5 +77,5 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
         Q_m, N_m = Q_mmax, N
         Esignal2 = 1
 
-    print(f'{Q_m=}, {Q_req=}')
+    print(f'{model=}, {Q_m=}, {Q_req=}')
     return (model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2)

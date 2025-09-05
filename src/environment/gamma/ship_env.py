@@ -277,7 +277,7 @@ class ShipEnv(gym.Env):
 
     def step(self, actions) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
-        assert self.engine_version == 'v3', 'Engine must be v3'
+        # assert self.engine_version == 'v3', 'Engine must be v3'
         action = actions[0] 
         Q_m_ratio = actions[1] 
         time = self.state['time'][0] 
