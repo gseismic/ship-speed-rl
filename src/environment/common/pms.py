@@ -78,5 +78,5 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
         Q_m, N_m = Q_mmax, N
         Esignal2 = 1
 
-    print(f'{model=}, {Q_m=}, {Q_req=}')
+    # print(f'{model=}, {Q_m=}, {Q_req=}')
     return (model, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2)
