@@ -62,7 +62,8 @@ def PMS(N: float, Q_req: float, SOC: float) -> tuple[int, float, float, float, f
     # print(f'{SOC=}, {model=}, {Q_emin=}, {Q_emax=}, {Q_mmax=}, {Q_req=}, {SOC=}')
     # print(f'{SOC=}, {model=}') 
     if model == 1 or model == 3:  # 发动机最大+电机补充 
-        Q_e, N_e = Q_emax, N 
+        Q_e, N_e = min(Q_emax, Q_req), N # FIXED 
+        # Q_m, N_m = Q_req - Q_e, N 
         Q_m, N_m = Q_req - Q_e, N 
     elif model == 2 or model == 8:  # 纯发动机工作 
         Q_e, N_e = (Q_req, N) if model == 8 else (Q_req, N)
