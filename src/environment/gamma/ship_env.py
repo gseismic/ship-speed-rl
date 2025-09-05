@@ -31,8 +31,8 @@ class ShipEnv(gym.Env):
         dt=2,
         soc_min=0.2,
         soc_max=0.8,
-        v_min=0.1,
-        v_max=50.0,
+        v_min=2.5, #0.1,
+        v_max=3.5, #50.0,
         max_time=72,
         eval=False,
         data_file='data/Data_Input.xlsx',
@@ -294,6 +294,7 @@ class ShipEnv(gym.Env):
         del_t = self.dt  # 时间步长（小时）
         newPosition = position + del_S_nm
         newTime = time + self.dt
+        reason = 'none'
 
         # 初始化标志和奖励
         terminated = False
@@ -318,6 +319,7 @@ class ShipEnv(gym.Env):
                 # 未到达目标
                 out_of_time = True
                 remaining_nm = self.max_S_nm - newPosition
+                reason = 'out_of_time'
         else:
             # 未超时
             if newPosition >= self.max_S_nm:
@@ -328,13 +330,15 @@ class ShipEnv(gym.Env):
             else:
                 # 未到达目标
                 remaining_nm = self.max_S_nm - newPosition
+                reason = 'not_reach_goal'
 
         # 根据是否到达目标设置奖励和终止标志
         if reach_goal:
             goal_reward = 2000
             terminated = True 
         elif out_of_time:
-            goal_reward = -2000 * (remaining_nm / self.max_S_nm) ** 2 - 2000
+            # goal_reward = -2000 * (remaining_nm / self.max_S_nm) ** 2 - 2000
+            goal_reward = 0 # -2000 * (remaining_nm / self.max_S_nm) + 2000
             terminated = True
 
         # 获取当前风速和风向
@@ -482,6 +486,7 @@ class ShipEnv(gym.Env):
         # 构建info字典
         info = {
             'succ': reach_goal,
+            'reason': reason,
             'Esignal1': Esignal1,
             'Esignal2': Esignal2,
             'soc': newSOC,
@@ -489,6 +494,7 @@ class ShipEnv(gym.Env):
             'time': newTime,
             'reward': reward,
             'RN': RN,
+            'Battery_state': Battery_state,
             'delta_fuel': del_fuel_consumption,
             'total_fuel': self._total_fuel,
             'total_fuel_list': self._total_fuel_list,
