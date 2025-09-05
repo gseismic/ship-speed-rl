@@ -328,9 +328,9 @@ class ShipEnv(gym.Env):
                 del_t = del_S_nm * 1852 / V_ship / 3600
                 reach_goal = True
             else:
-                # 未到达目标
+                # 未到达目标，继续 
                 remaining_nm = self.max_S_nm - newPosition
-                reason = 'not_reach_goal'
+                # reason = 'not_reach_goal'
 
         # 根据是否到达目标设置奖励和终止标志
         if reach_goal:
@@ -339,9 +339,9 @@ class ShipEnv(gym.Env):
         elif out_of_time:
             # goal_reward = -2000 * (remaining_nm / self.max_S_nm) ** 2 - 2000
             goal_reward = 0 # -2000 * (remaining_nm / self.max_S_nm) + 2000
-            terminated = True
+            terminated = True 
 
-        # 获取当前风速和风向
+        # 获取当前风速和风向 
         alpha_S = self.V_alpha[index]  # 未使用
         V_wind = self.V_wind.iloc[index, time_index + 1]
         alpha_wind = self.alpha_wind.iloc[index, time_index + 1]
