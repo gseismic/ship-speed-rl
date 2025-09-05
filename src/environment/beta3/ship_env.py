@@ -413,6 +413,7 @@ class ShipEnv(gym.Env):
             types_ = self.regularization_type.split('_')
             # print(types_) 
             # raise 
+            soc_regl = 0
             if 'Np' in types_:
                 term += Np_bound_reward(N_p, version=self.engine_version)
             if 'Q' in types_:
@@ -421,9 +422,12 @@ class ShipEnv(gym.Env):
                 term += Nrpm_bound_reward(N_rpm)
             if 'SOC' in types_:
                 # term += SOC_bound_reward(SOC, self.SOC_low, self.SOC_high)
-                term += SOC_bound_reward(newSOC, self.SOC_low, self.SOC_high)
+                soc_regl = SOC_bound_reward(newSOC, self.SOC_low, self.SOC_high)
             if not self.eval:
                 reward += term
+            
+            reward += soc_regl
+            print(f'{soc_regl=}')
 
         # 处理信号错误
         BIG_PENALTY = -5000
