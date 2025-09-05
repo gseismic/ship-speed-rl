@@ -56,8 +56,9 @@ def train_model(seed,
         clip_range=0.2, 
         seed=seed,
         policy_kwargs={
-            "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
-            # "activation_fn": nn.ReLU, 
+            # "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
+            "net_arch": [dict(pi=[256, 256, 256], vf=[256, 256, 256])],
+            "activation_fn": nn.ReLU, 
         },
         tensorboard_log="./ppo_ship_log_gamma/"
     )

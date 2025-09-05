@@ -86,7 +86,13 @@ class ShipEnv(gym.Env):
         # 定义动作空间（连续速度值）
         Q_m_ratio_min = 0
         Q_m_ratio_max = 1.0 
-        self.action_space = gym.spaces.Box(
+        if self.engine_version in ['v1', 'v2']:
+            self.action_space = gym.spaces.Box(
+                low=np.array([v_min]), 
+                high=np.array([v_max]), shape=(1,), dtype=np.float64
+            )
+        else:  
+            self.action_space = gym.spaces.Box(
             low=np.array([v_min, Q_m_ratio_min]), 
             high=np.array([v_max, Q_m_ratio_max]), shape=(2,), dtype=np.float64
         )
@@ -278,8 +284,12 @@ class ShipEnv(gym.Env):
     def step(self, actions) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
         # assert self.engine_version == 'v3', 'Engine must be v3'
-        action = actions[0] 
-        Q_m_ratio = actions[1] 
+        print(f'{actions=}')
+        if self.engine_version in ['v1', 'v2']:
+            action = actions[0] 
+        else:
+            action = actions[0] 
+            Q_m_ratio = actions[1] 
         time = self.state['time'][0] 
         SOC = self.state['soc'][0] 
         position = self.state['position'][0] 
