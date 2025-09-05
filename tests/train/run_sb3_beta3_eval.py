@@ -5,7 +5,7 @@ from stable_baselines3 import PPO
 import sys
 import os 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.environment.beta2.ship_env import ShipEnv
+from src.environment.beta3.ship_env import ShipEnv
 from test_utils import test_model
 # 加载训练好的模型
 # model = PPO.load("ppo_ship") 

@@ -420,7 +420,8 @@ class ShipEnv(gym.Env):
             if 'Nrpm' in types_:
                 term += Nrpm_bound_reward(N_rpm)
             if 'SOC' in types_:
-                term += SOC_bound_reward(SOC, self.SOC_low, self.SOC_high)
+                # term += SOC_bound_reward(SOC, self.SOC_low, self.SOC_high)
+                term += SOC_bound_reward(newSOC, self.SOC_low, self.SOC_high)
             if not self.eval:
                 reward += term
 
