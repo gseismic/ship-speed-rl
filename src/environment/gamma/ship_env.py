@@ -390,7 +390,8 @@ class ShipEnv(gym.Env):
         # 计算电池功率和SOC 
         P_b = battery_power(N_m, Q_m) 
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)
-        print(f'{Q_req=}, {Q_m_ratio=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
+        if self.eval:
+            print(f'{Q_req=}, {Q_m_ratio=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
 
         # 计算燃料消耗 
         W_fuel = Gas_consumption(N_e, Q_e) 
@@ -417,7 +418,8 @@ class ShipEnv(gym.Env):
         
         
         Q_req_reward = make_bound_reward(Q_req, Q_emin, Q_emax + Q_mmax, 1e-2, thresh_ratio=0.05)
-        print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
+        if self.eval:
+            print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
         reward += Q_req_reward 
 
         # 添加正则化奖励（如果启用）
@@ -440,7 +442,7 @@ class ShipEnv(gym.Env):
                 reward += term
             
             reward += soc_regl
-            print(f'{soc_regl=}')
+            # print(f'{soc_regl=}')
 
         # 处理信号错误
         BIG_PENALTY = -5000
