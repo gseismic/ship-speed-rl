@@ -16,7 +16,7 @@ from src.algorithm.utils.seed import seed_all
 from test_utils import test_model, plot_learning_curves 
 
 def train_model(seed, 
-                total_timesteps=500_000, 
+                total_timesteps=3_000_000, 
                 lr=3e-4, gamma=1.0, 
                 reward_type='scaled', 
                 engine_version='v1', 
