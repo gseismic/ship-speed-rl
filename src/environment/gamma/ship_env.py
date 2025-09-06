@@ -284,7 +284,7 @@ class ShipEnv(gym.Env):
     def step(self, actions) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
         # assert self.engine_version == 'v3', 'Engine must be v3'
-        print(f'{actions=}')
+        # print(f'{actions=}')
         if self.engine_version in ['v1', 'v2']:
             action = actions[0] 
         else:
@@ -401,7 +401,7 @@ class ShipEnv(gym.Env):
         P_b = battery_power(N_m, Q_m) 
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)
         if self.eval:
-            print(f'{Q_req=}, {Q_m_ratio=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
+            print(f'{Q_req=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
 
         # 计算燃料消耗 
         W_fuel = Gas_consumption(N_e, Q_e) 

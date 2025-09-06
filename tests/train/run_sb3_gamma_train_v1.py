@@ -16,7 +16,7 @@ from src.algorithm.utils.seed import seed_all
 from test_utils import test_model, plot_learning_curves 
 
 def train_model(seed, 
-                total_timesteps=500_000, 
+                total_timesteps=3_000_000, 
                 lr=3e-4, gamma=1.0, 
                 reward_type='scaled', 
                 engine_version='v1', 
@@ -56,9 +56,9 @@ def train_model(seed,
         clip_range=0.2, 
         seed=seed,
         policy_kwargs={
-            # "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
-            "net_arch": [dict(pi=[256, 256, 256], vf=[256, 256, 256])],
-            "activation_fn": nn.ReLU, 
+            "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
+            # "net_arch": [dict(pi=[256, 256, 256], vf=[256, 256, 256])],
+            # "activation_fn": nn.ReLU, 
         },
         tensorboard_log="./ppo_ship_log_gamma/"
     )
