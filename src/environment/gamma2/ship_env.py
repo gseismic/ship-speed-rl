@@ -107,18 +107,18 @@ class ShipEnv(gym.Env):
                 dtype=np.float32
             ),
             # FIXED: add position and time
-            # 'position': spaces.Box(
-            #     low=0.0,
-            #     high=self.max_S_nm,
-            #     shape=(1,),
-            #     dtype=np.float32
-            # ),
-            # 'time': spaces.Box(
-            #     low=0.0,
-            #     high=self.max_time,
-            #     shape=(1,),
-            #     dtype=np.float32
-            # ),
+            'position': spaces.Box(
+                low=0.0,
+                high=self.max_S_nm,
+                shape=(1,),
+                dtype=np.float32
+            ),
+            'time': spaces.Box(
+                low=0.0,
+                high=self.max_time,
+                shape=(1,),
+                dtype=np.float32
+            ),
             'r_position': spaces.Box(
                 low=0.0,
                 high=self.max_S_nm,
@@ -238,8 +238,8 @@ class ShipEnv(gym.Env):
 
         # 返回状态和info（深拷贝以避免修改）
         state = copy.deepcopy(self.state)
-        del state['position']
-        del state['time']
+        # del state['position']
+        # del state['time']
         info = {
             'soc': initial_SOC,
             'position': initial_position,
@@ -530,8 +530,8 @@ class ShipEnv(gym.Env):
 
         # 准备返回状态（移除位置和时间）
         state = copy.deepcopy(self.state)
-        del state['position']
-        del state['time']
+        # del state['position']
+        # del state['time']
 
         self._step += 1
         return state, reward, terminated, truncated, info
