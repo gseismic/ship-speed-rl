@@ -67,7 +67,7 @@ for seed in seeds:
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_Q_Nrpm_best' 
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_Nrpm_best' 
     model_path = f'models/mp_env1_r_pos_time_soc_nm_{seed}_0.0003_1.0_per_nm_{engine_version}_Np_dt{dt}_best' 
-    model_path = f'models/gamma_{seed}_0.0003_1.0_{reward_type}_{engine_version}_Np_SOC_best' 
+    model_path = f'models/gamma2_{seed}_0.0003_1.0_{reward_type}_{engine_version}_Np_SOC_best' 
     # model_path = f'models/mp_env1_r_pos_time_soc_nm_t_{seed}_0.0003_1.0_per_nm_{engine_version}_Np' 
 
 

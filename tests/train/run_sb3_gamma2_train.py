@@ -27,7 +27,7 @@ def train_model(seed,
     os.makedirs('models', exist_ok=True) 
 
     param_tag = f'{lr}_{gamma}_{reward_type}_{engine_version}_{regularization_type}'
-    tag = f'gamma_{seed}_{param_tag}' 
+    tag = f'gamma2_{seed}_{param_tag}' 
     # tag = f'mp_env1_r_pos_time_soc_nm_t2_largenn_vsmall_{seed}_{param_tag}' 
 
     # 创建并行环境 
