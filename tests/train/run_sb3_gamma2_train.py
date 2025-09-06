@@ -59,7 +59,7 @@ def train_model(seed,
             "net_arch": [dict(pi=[512, 512, 256], vf=[512, 512, 256])],
             # "activation_fn": nn.ReLU, 
         },
-        tensorboard_log="./ppo_ship_log_gamma/"
+        tensorboard_log="./ppo_ship_log_gamma2/"
     )
 
     # 创建奖励回调 
