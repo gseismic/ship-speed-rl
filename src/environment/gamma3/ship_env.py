@@ -182,6 +182,8 @@ class ShipEnv(gym.Env):
         """重置环境状态，返回初始观察和info。"""
         super().reset(**kwargs)
         import random
+        
+        self.eval = True # XXX 测试
 
         if not self.eval:
             # 训练模式：随机初始化时间、位置和SOC
@@ -430,7 +432,8 @@ class ShipEnv(gym.Env):
         P_b = battery_power(N_m, Q_m) 
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)
         if self.eval:
-            print(f'{Q_req=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
+            # print(f'{Q_req=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
+            pass 
 
         # 计算燃料消耗 
         W_fuel = Gas_consumption(N_e, Q_e) 
@@ -458,7 +461,8 @@ class ShipEnv(gym.Env):
         
         Q_req_reward = make_bound_reward(Q_req, Q_emin, Q_emax + Q_mmax, 1e-2, thresh_ratio=0.05)
         if self.eval:
-            print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
+            # print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
+            pass 
         reward += Q_req_reward 
 
         # 添加正则化奖励（如果启用）
