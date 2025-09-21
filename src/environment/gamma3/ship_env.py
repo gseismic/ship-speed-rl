@@ -183,7 +183,7 @@ class ShipEnv(gym.Env):
         super().reset(**kwargs)
         import random
         
-        self.eval = True # XXX 测试
+        # self.eval = True # XXX 测试
 
         if not self.eval:
             # 训练模式：随机初始化时间、位置和SOC
