@@ -1,20 +1,20 @@
 import numpy as np
-from .engine import Engine
-from .motor import Motor
-from .battery_power import battery_power
-from .gas_consumption import Gas_consumption
+from .engine import Engine 
+from .motor import Motor 
+from .battery_power import battery_power 
+from .gas_consumption import Gas_consumption 
 
 def ECMS_Qm2(N, Q_req, SOC, Q_m_ratio):
     """
     Q_m作为额外的控制变量 
     """
-    Esignal2 = 0
-    model = 0
-    E_batt = 205.6
+    Esignal2 = 0 
+    model = 0 
+    E_batt = 205.6 
     
-    # 发动机和电机约束
-    Q_emin, Q_emax = Engine(N) 
-    Q_mmax = Motor(N) 
+    # 发动机和电机约束 
+    Q_emin, Q_emax = Engine(N) # 0, Q_emax
+    Q_mmax = Motor(N) # -Q_mmax, Q_mmax
     time_interval = 2  # 环境数据变化的时间间隔 
     
     # 边界超限报警

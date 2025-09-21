@@ -9,14 +9,14 @@ from ..common.gear_box import GearBox
 from ..common.propeller import propeller
 from ..common.pms import PMS
 from ..common.ecms import ECMS
-from ..common.ecms_qm import ECMS_Qm
+from ..common.ecms_qm_range800 import ECMS_Qm_range800
 from ..common.battery_power import battery_power
 from ..common.battery_soc import Battery_SOC
 from ..common.gas_consumption import Gas_consumption
 from ..common.propeller_v2 import propeller as propeller_v2
 from ..common.ship_resistance3_v2 import ship_resistance3 as ship_resistance3_v2
 from ..common.gear_box_v2 import GearBox as GearBox_v2 
-from ..common.reward_utils import Np_bound_reward, Q_bound_reward, Nrpm_bound_reward, SOC_bound_reward 
+from ..common.reward_utils import Np_bound_reward, Q_bound_reward, Nrpm_bound_reward, SOC_bound_reward, make_bound_reward
 
 # from beta/..t2m.py
 class ShipEnv(gym.Env):
@@ -24,6 +24,8 @@ class ShipEnv(gym.Env):
     
     ChangeLog:
         - 2025-09-02: 删除future_avg_V_wind和future_avg_alpha_wind
+        - 2025-09-21: 修改初始SOC为0.6, 增加get_last_soc_reward()奖励
+            - 要求最后一个soc和初始soc一致
     """
 
     def __init__(
@@ -31,8 +33,8 @@ class ShipEnv(gym.Env):
         dt=2,
         soc_min=0.2,
         soc_max=0.8,
-        v_min=0.1,
-        v_max=50.0,
+        v_min=1.5, #0.1,
+        v_max=5.5, #50.0,
         max_time=72,
         eval=False,
         data_file='data/Data_Input.xlsx',
@@ -84,12 +86,18 @@ class ShipEnv(gym.Env):
         # self.avg_window_sizes = avg_window_sizes
         
         # 定义动作空间（连续速度值）
-        Q_m_min = 0 
-        Q_m_max = 1000 
-        self.action_space = gym.spaces.Box(
+        Q_m_min = -800
+        Q_m_max = 800 
+        if self.engine_version in ['v1', 'v2']:
+            self.action_space = gym.spaces.Box(
+                low=np.array([v_min]), 
+                high=np.array([v_max]), shape=(1,), dtype=np.float64
+            )
+        else:  
+            self.action_space = gym.spaces.Box(
             low=np.array([v_min, Q_m_min]), 
             high=np.array([v_max, Q_m_max]), shape=(2,), dtype=np.float64
-        ) 
+        )
 
         # 定义观察空间（字典形式）
         # num_windows = len(avg_window_sizes) * 3  # 未来3个航段的多个时间窗口
@@ -97,6 +105,19 @@ class ShipEnv(gym.Env):
             'soc': spaces.Box(
                 low=0.0,
                 high=1.0,
+                shape=(1,),
+                dtype=np.float32
+            ),
+            # FIXED: add position and time
+            'position': spaces.Box(
+                low=0.0,
+                high=self.max_S_nm,
+                shape=(1,),
+                dtype=np.float32
+            ),
+            'time': spaces.Box(
+                low=0.0,
+                high=self.max_time,
                 shape=(1,),
                 dtype=np.float32
             ),
@@ -144,6 +165,9 @@ class ShipEnv(gym.Env):
         self._total_fuel_list = [] 
         self._total_time = 0 
         self.use_remaing_time = True  # 使用剩余时间标志
+        
+        self._initial_SOC = None
+        self._last_SOC = None
 
     def _read_data(self):
         """从Excel文件读取数据。"""
@@ -181,7 +205,7 @@ class ShipEnv(gym.Env):
             index = 0
             initial_time = 0.0
             initial_position = 0.0
-            initial_SOC = 0.8
+            initial_SOC = 0.6 # 0.8 -> 0.6
             initial_V_wind = self.V_wind.iloc[index, time_index + 1]
             initial_alpha_wind = self.alpha_wind.iloc[index, time_index + 1]
             # print(f'初始风速: {initial_V_wind}')
@@ -197,7 +221,8 @@ class ShipEnv(gym.Env):
         self.initial_time = initial_time
         self.time = initial_time
         self.position = initial_position
-
+        self._last_SOC = initial_SOC
+        self._initial_SOC = initial_SOC
         # 构建状态字典
         self.state = {
             'soc': np.array([initial_SOC], dtype=np.float32),
@@ -219,8 +244,8 @@ class ShipEnv(gym.Env):
 
         # 返回状态和info（深拷贝以避免修改）
         state = copy.deepcopy(self.state)
-        del state['position']
-        del state['time']
+        # del state['position']
+        # del state['time']
         info = {
             'soc': initial_SOC,
             'position': initial_position,
@@ -262,8 +287,8 @@ class ShipEnv(gym.Env):
                 avg_alpha = initial_alpha_wind
             else:
                 # 收集有效数据
-                valid_cols = range(start, end + 1) 
-                if index < self.V_wind.shape[0]: 
+                valid_cols = range(start, end + 1)
+                if index < self.V_wind.shape[0]:
                     v_values = [self.V_wind.iloc[index, c] for c in valid_cols]
                     alpha_values = [self.alpha_wind.iloc[index, c] for c in valid_cols]
                     avg_v = np.mean(v_values) if v_values else initial_V_wind
@@ -277,21 +302,36 @@ class ShipEnv(gym.Env):
 
     def step(self, actions) -> Tuple[Dict, float, bool, bool, Dict]:
         """执行动作，返回新状态、奖励、终止标志、截断标志和info。"""
-        assert self.engine_version == 'v3', 'Engine must be v3'
-        action = actions[0] 
-        Q_m = actions[1] 
+        # assert self.engine_version == 'v3', 'Engine must be v3'
+        # print(f'{actions=}')
+        if self.engine_version in ['v1', 'v2']:
+            action = actions[0] 
+        else:
+            action = actions[0] 
+            Q_m = actions[1] 
         time = self.state['time'][0] 
         SOC = self.state['soc'][0] 
+        self._last_SOC = SOC
         position = self.state['position'][0] 
         time_index = int(time / 2) # FIXED 2 -> dt 
         V_ship = action  # 船舶速度（m/s）
         index = np.searchsorted(self.S_nm, position) 
+        
+        def get_last_soc_reward():
+            # 要求最后一个soc和初始soc一致
+            diff = abs(self._last_SOC - self._initial_SOC)
+            # diff: 0.1 : reward: -3000 
+            return -(diff*10)**2 * 3000
+            # return max(-(diff*10)**2 * 3000, -5000)
+        
+        # print(f'{Q_m=}, {V_ship=}') 
 
         # 计算新位置和时间 
         del_S_nm = V_ship * self.dt * 3600 / 1852  # 转换为海里
         del_t = self.dt  # 时间步长（小时）
         newPosition = position + del_S_nm
         newTime = time + self.dt
+        reason = 'none'
 
         # 初始化标志和奖励
         terminated = False
@@ -316,6 +356,7 @@ class ShipEnv(gym.Env):
                 # 未到达目标
                 out_of_time = True
                 remaining_nm = self.max_S_nm - newPosition
+                reason = 'out_of_time'
         else:
             # 未超时
             if newPosition >= self.max_S_nm:
@@ -324,18 +365,22 @@ class ShipEnv(gym.Env):
                 del_t = del_S_nm * 1852 / V_ship / 3600
                 reach_goal = True
             else:
-                # 未到达目标
+                # 未到达目标，继续 
                 remaining_nm = self.max_S_nm - newPosition
+                # reason = 'not_reach_goal'
 
         # 根据是否到达目标设置奖励和终止标志
         if reach_goal:
             goal_reward = 2000
+            goal_reward += get_last_soc_reward()
             terminated = True 
         elif out_of_time:
-            goal_reward = -2000 * (remaining_nm / self.max_S_nm) ** 2 - 2000
-            terminated = True
+            # goal_reward = -2000 * (remaining_nm / self.max_S_nm) ** 2 - 2000
+            goal_reward = 0 # -2000 * (remaining_nm / self.max_S_nm) + 2000
+            goal_reward += get_last_soc_reward()
+            terminated = True 
 
-        # 获取当前风速和风向
+        # 获取当前风速和风向 
         alpha_S = self.V_alpha[index]  # 未使用
         V_wind = self.V_wind.iloc[index, time_index + 1]
         alpha_wind = self.alpha_wind.iloc[index, time_index + 1]
@@ -348,7 +393,7 @@ class ShipEnv(gym.Env):
         # 计算船舶阻力
         if self.engine_version == 'v1':
             RN = ship_resistance3(V_ship, alpha_S, V_wind, alpha_wind)
-        elif self.engine_version in ['v2', 'v3']:
+        elif self.engine_version in ['v2', 'v3', 'v5']:
             RN = ship_resistance3_v2(V_ship, alpha_S, V_wind, alpha_wind)
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -356,7 +401,7 @@ class ShipEnv(gym.Env):
         # 计算螺旋桨参数
         if self.engine_version == 'v1':
             N_p, Q_p, Esignal1 = propeller(V_ship, RN)
-        elif self.engine_version in ['v2', 'v3']:
+        elif self.engine_version in ['v2', 'v3', 'v5']:
             N_p, Q_p, Esignal1 = propeller_v2(V_ship, RN)
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -364,7 +409,7 @@ class ShipEnv(gym.Env):
         # 计算齿轮箱参数 
         if self.engine_version == 'v1': 
             N_rpm, Q_req = GearBox(N_p, Q_p) 
-        elif self.engine_version in ['v2', 'v3']: 
+        elif self.engine_version in ['v2', 'v3', 'v5']: 
             N_rpm, Q_req = GearBox_v2(N_p, Q_p) 
         else: 
             raise ValueError(f'无效引擎版本: {self.engine_version}')
@@ -374,16 +419,18 @@ class ShipEnv(gym.Env):
             _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = PMS(N_rpm, Q_req, SOC)
         elif self.engine_version == 'v2': 
             _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS(N_rpm, Q_req, SOC)            
-        elif self.engine_version == 'v3': 
-            _, N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS_Qm(
+        elif self.engine_version == 'v5': 
+            # Esignal2 = 0 # ratio下 始终合法
+            N_e, Q_e, N_m, Q_m, Q_emin, Q_emax, Q_mmax, Esignal2 = ECMS_Qm_range800(
                 N_rpm, Q_req, SOC, Q_m) 
-            # Q_m = Q_m
         else:
             raise ValueError(f'无效引擎版本: {self.engine_version}')
 
         # 计算电池功率和SOC 
         P_b = battery_power(N_m, Q_m) 
         newSOC, Battery_state, del_t_Out = Battery_SOC(P_b, SOC, del_t)
+        if self.eval:
+            print(f'{Q_req=}, {SOC=}, {newSOC=}, {P_b=}, {N_m=}, {N_e=}, {Q_e=}, {Q_m=}')
 
         # 计算燃料消耗 
         W_fuel = Gas_consumption(N_e, Q_e) 
@@ -396,7 +443,9 @@ class ShipEnv(gym.Env):
         reward = 0
         
         # 检查Q_e是否合理
-        Q_e__check = Q_req - Q_m 
+        # Q_e__check = Q_req - Q_m
+        # if Q_e__check < 0:
+        #     print(f'Q_e__check < 0: {Q_e__check=}')
         # if Q_e__check < 0:
         #     reward += -5000
         #     terminated = True
@@ -406,11 +455,16 @@ class ShipEnv(gym.Env):
         # else:
         #     reward += -del_fuel_consumption
         
+        
+        Q_req_reward = make_bound_reward(Q_req, Q_emin, Q_emax + Q_mmax, 1e-2, thresh_ratio=0.05)
+        if self.eval:
+            print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
+        reward += Q_req_reward 
 
         # 添加正则化奖励（如果启用）
         if self.regularization_type is not None and self.regularization_type.lower() != 'none':
-            term = 0
-            types_ = self.regularization_type.split('_')
+            term = 0 
+            types_ = self.regularization_type.split('_') 
             # print(types_) 
             # raise 
             soc_regl = 0
@@ -427,11 +481,12 @@ class ShipEnv(gym.Env):
                 reward += term
             
             reward += soc_regl
-            print(f'{soc_regl=}')
+            # print(f'{soc_regl=}')
 
         # 处理信号错误
         BIG_PENALTY = -5000
-        if Esignal1 == -1 or Esignal1 == 1 or Q_e__check < 0 or Q_e__check > Q_emax:
+        if Esignal1 == -1 or Esignal1 == 1 or Battery_state != 0:
+            # NEW: Battery_state 大惩罚
             reward += BIG_PENALTY
             terminated = True
         elif Esignal2 == 1:
@@ -472,6 +527,7 @@ class ShipEnv(gym.Env):
         # 构建info字典
         info = {
             'succ': reach_goal,
+            'reason': reason,
             'Esignal1': Esignal1,
             'Esignal2': Esignal2,
             'soc': newSOC,
@@ -479,6 +535,7 @@ class ShipEnv(gym.Env):
             'time': newTime,
             'reward': reward,
             'RN': RN,
+            'Battery_state': Battery_state,
             'delta_fuel': del_fuel_consumption,
             'total_fuel': self._total_fuel,
             'total_fuel_list': self._total_fuel_list,
@@ -489,8 +546,8 @@ class ShipEnv(gym.Env):
 
         # 准备返回状态（移除位置和时间）
         state = copy.deepcopy(self.state)
-        del state['position']
-        del state['time']
+        # del state['position']
+        # del state['time']
 
         self._step += 1
         return state, reward, terminated, truncated, info

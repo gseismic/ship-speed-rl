@@ -10,15 +10,15 @@ import copy
 import pandas as pd 
 import time 
 
-# TODO: 确保所有的是张量才可能反向传播
-import sys
+# TODO: 确保所有的是张量才可能反向传播 
+import sys 
 import os 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
-from src.environment.gamma2.ship_env import ShipEnv
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))) 
+from src.environment.gamma2.ship_env import ShipEnv 
 
-class ShipOptimizer(nn.Module):
-    """神经网络模型，用于优化船舶航行"""
-    def __init__(self, input_dim, output_dim, hidden_dim=128):
+class ShipOptimizer(nn.Module): 
+    """神经网络模型，用于优化船舶航行""" 
+    def __init__(self, input_dim, output_dim, hidden_dim=128): 
         super(ShipOptimizer, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(input_dim, hidden_dim),

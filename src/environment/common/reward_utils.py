@@ -54,8 +54,8 @@ def Np_bound_reward(N_p, beta1=1e-2, version='v1', barrier_type='barrier'):
 def Q_bound_reward(Q_req, Q_emax, Q_mmax, beta2=1e-2, thresh_ratio=0.05, barrier_type='barrier'):
     # v_max = Q_emax + Q_mmax 
     # 快越界时惩罚 
-    v_min = Q_emax 
-    v_max = Q_emax + Q_mmax
+    v_min = Q_emax # 
+    v_max = Q_emax + Q_mmax 
     if barrier_type == 'barrier':
         return make_bound_reward(Q_req, v_min, v_max, beta2, thresh_ratio)
     else:

@@ -34,7 +34,7 @@ def Battery_SOC(P_b: float, SOC_In: float, del_t: float) -> tuple:
     """
     E_batt = 205.6  # 电池总容量(kW·h) TODO: 写在const中
 
-    # 计算理论SOC变化
+    # 计算理论SOC变化 
     SOC_Out = (E_batt * SOC_In - P_b * del_t) / E_batt 
     # print(f'{SOC_Out=}, {P_b=}, {del_t=}, {E_batt=}, {del_t*P_b/E_batt=}')
 
