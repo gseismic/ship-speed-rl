@@ -440,7 +440,9 @@ class ShipEnv(gym.Env):
         #     reward += -del_fuel_consumption
         
         
-        Q_req_reward = make_bound_reward(Q_req, Q_emin, Q_emax + Q_mmax, 1e-2, thresh_ratio=0.05)
+        Q_req_min = 0
+        Q_req_max = Q_emax + Q_mmax
+        Q_req_reward = make_bound_reward(Q_req, Q_req_min, Q_req_max, 1e-2, thresh_ratio=0.05)
         if self.eval:
             print(f'**{Q_req=}, {Q_emin=}, {Q_emax + Q_mmax=}, {Q_req_reward=}')
         reward += Q_req_reward 
@@ -454,12 +456,12 @@ class ShipEnv(gym.Env):
             soc_regl = 0
             if 'Np' in types_: 
                 term += Np_bound_reward(N_p, version=self.engine_version)
-            if 'Q' in types_: 
-                term += Q_bound_reward(Q_req, Q_emax, Q_mmax) 
+            # if 'Q' in types_: 
+            #     term += Q_bound_reward(Q_req, Q_emax, Q_mmax) 
             if 'Nrpm' in types_: 
                 term += Nrpm_bound_reward(N_rpm) 
             if 'SOC' in types_: 
-                # term += SOC_bound_reward(SOC, self.SOC_low, self.SOC_high)
+                # term += SOC_bound_reward(SOC, self.SOC_low, self.SOC_high) 
                 soc_regl = SOC_bound_reward(newSOC, self.SOC_low, self.SOC_high)
             if not self.eval:
                 reward += term
